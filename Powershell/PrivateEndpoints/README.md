@@ -1,6 +1,6 @@
 To use this script, create a CSV file with the following headers
 
-# Create a CSV file that has the following headers
+## Create a CSV file that has the following headers
 **rg** #resource group where the private endpoint will be deployed <br>
 **pename** #Name of the private endpoint <br>
 **vnet** #name of the vNet where the private endpoint will be deployed <br>
@@ -14,7 +14,7 @@ To use this script, create a CSV file with the following headers
 **zonegroup** #Name of the private dns zone group (IE: default). <br>
 **zone** #Name of the private dns zone (IE: privatelink.database.windows.net). <br>
 
-# Run the script
+## Run the script
 Download the provision-pes.ps1 script and call it with the following syntax<br>
 ```
 provision-pes.ps1 --subscription <your subscription ID> --csvfile <the csvfilename formatted with the above headers>
