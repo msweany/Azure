@@ -1,7 +1,7 @@
 To use this script, create a CSV file with the following headers
 
 # Create a CSV file that has the following headers
-rg #resource group where the private endpoint will be deployed
+rg #resource group where the private endpoint will be deployed \n
 pename #Name of the private endpoint
 vnet #name of the vNet where the private endpoint will be deployed
 subnet #subnet the private endpoint will be deployed
