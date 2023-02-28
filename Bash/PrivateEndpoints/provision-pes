@@ -1,0 +1,42 @@
+This document will allow you to bulk provision private endpoints in Azure using Azure CLI by reading from a 
+CSV and inputting those variables into the appropriate az commands to provision the endpoint and attach it to the appropriate
+private DNS zone.
+
+This script comes with no guarantees or support, make sure you know what you are doing before you run this.
+
+Create a CSV file that has the following headers
+rg #resource group where the private endpoint will be deployed
+pename #Name of the private endpoint
+vnet #name of the vNet where the private endpoint will be deployed
+subnet #subnet the private endpoint will be deployed
+nic #The custom name of the network interface attached to the private endpoint.
+dest #The resource id of the private endpoint to connect to.
+plinkname #Name of the private link service connection.
+location #Location the where the private endpoint will be deployed (values from az account list-locations)
+destgroup # group ID of endpoint connecting to (IE: sqlServer)
+zonename #Private DNS Zone name (IE: privatelink.database.windows.net)
+zonegroup #Name of the private dns zone group.
+zone #Name of the private dns zone.
+
+#Either upload this CSV or save it where you run your Azure CLI commands
+#make sure you're in the correct subscription 
+az account show
+
+#change to the correct sub if neede
+az account set --subscription '<subscription id>'
+
+#if uploaded to Azure, make sure the CSV doesn't have any extra encoding, this will make sure it's encoded correctly
+dos2unix privatelinkfile.csv
+
+#Copy/Paste the following code to skip the first line in the CSV, then grab each line and pass those variables to create the private link and add it to the privte DNS zone
+{ 
+read
+while IFS=, read -r rg pename vnet subnet nic dest plinkname location destgroup zonename zonegroup zone
+do
+  az network private-endpoint create -g $rg -n $pename --vnet-name $vnet --subnet $subnet --nic-name $nic --private-connection-resource-id $dest --connection-name $plinkname -l $location --group-id $destgroup
+	az network private-endpoint dns-zone-group create --endpoint-name $pename -g $rg -n $zonegroup --zone-name $zone --private-dns-zone $zonename
+done 
+} < privatelinkfile.csv
+
+
+Thank you to my peers [Elan Shudnow](https://github.com/ElanShudnow) and [Tim Sullivan](https://github.com/tjsullivan1) for helping me through parts of this.
