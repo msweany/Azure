@@ -1,0 +1,71 @@
+# things to be aware of
+# make sure you are in the subscription you want to be in 
+az account show 
+# Set a specific sub
+az account set --subscription 'subscription-id'
+# if you get this error: 
+Failed to connect to MSI. Please make sure MSI is configured correctly.
+Get Token request returned: <Response [400]>
+# then you need to re-authenticate with the Azure CLI
+az login
+
+# Variables - adjust these as needed
+loc='deployment-location'
+upn='someone@domain.com'
+certs='certs-directory'
+baseName='demo-'$loc'-mhsm'
+
+# test variables are set based on baseName
+rg=$baseName'-rg'
+hsm=$baseName'-hsm'
+key=$baseName'-key'
+encset=$baseName'-enc-set'
+
+
+# Create the RG
+az group create -l $loc -n $rg
+
+# HSM Needs to be unique
+# get the ID of the signed in user
+oid=$(az ad signed-in-user show --query objectId -o tsv)
+# provision the HSM
+az keyvault create --hsm-name $hsm --resource-group $rg --location $loc --administrators $oid --retention-days 28
+
+# After the KV is created, use this command at any time to see it's configuration 
+az keyvault show --hsm-name $hsm
+
+#Enable Purge Protection -- may need to ctrl C out of this one, I needed to two times
+az keyvault update-hsm --enable-purge-protection true --hsm-name $hsm --resource-group $rg
+
+# backup the certs
+# create a directory for the certs to be saved
+mkdir $certs
+# Paste in one at a time and answer questions
+openssl req -newkey rsa:2048 -nodes -keyout cert_0.key -x509 -days 365 -out ./$certs/cert_0.cer
+openssl req -newkey rsa:2048 -nodes -keyout cert_1.key -x509 -days 365 -out ./$certs/cert_1.cer
+openssl req -newkey rsa:2048 -nodes -keyout cert_2.key -x509 -days 365 -out ./$certs/cert_2.cer
+ 
+# needed for recovery
+az keyvault security-domain download --hsm-name $hsm --sd-wrapping-keys ./$certs/cert_0.cer ./$certs/cert_1.cer ./$certs/cert_2.cer --sd-quorum 2 --security-domain-file MHSM-SD.json
+ 
+# grant permissions
+az keyvault role assignment create --hsm-name $hsm --role "Managed HSM Crypto User" --assignee $upn --scope /keys
+# https://docs.microsoft.com/en-us/cli/azure/keyvault/role?view=azure-cli-latest
+# https://docs.microsoft.com/en-us/azure/key-vault/managed-hsm/built-in-roles
+ 
+#Create an RSA key
+az keyvault key create --hsm-name $hsm --name $key --ops wrapKey unwrapKey --kty RSA-HSM --size 3072
+ 
+### Get KID
+kid=$(az keyvault key show --hsm-name $hsm --name $key --query [key.kid] -o tsv)
+ 
+# Create a disk encryption set that uses the key we created earlier
+az disk-encryption-set create --resource-group $rg --name $encset --key-url $kid
+## adding source-vault was needed in the past, but is failing for me today (3/14/22)
+## az disk-encryption-set create --resource-group $rg --name $encset --key-url $kid --source-vault $hsm
+ 
+#Grant the DiskEncryptionSet resource access to the key vault.
+desIdentity=$(az disk-encryption-set show -n $encset -g $rg --query [identity.principalId] -o tsv)
+az keyvault role assignment create --hsm-name $hsm --role "Managed HSM Crypto Service Encryption User" --assignee $desIdentity --scope /keys
+ 
+# you should be able to add the BYOK encryption $encset to supported services

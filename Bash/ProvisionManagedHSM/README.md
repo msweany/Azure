@@ -1,0 +1,1 @@
+This file of commands was created when Managed HSM couldn't be provisioned in the portal.  It is highly likely that this data is out of date.
