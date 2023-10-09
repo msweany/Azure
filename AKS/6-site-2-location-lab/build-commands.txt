@@ -1,0 +1,66 @@
+#create the AKS clusters
+# Get the cluster created, I used Azure portal and stuck with the defaults
+# I named the RG's for these:
+lab-eastus-rg
+lab-westus-rg
+
+# I named the clusters:
+lab-eastus-aks1
+lab-westus-aks1
+
+# The namespace for AKS created is called 
+ingress-nginx
+
+# login to Azure from CLI (bash)
+az login
+
+# set sub you want to work in
+az account set --subscription <subscription id>
+
+# Connect to east cluster
+az aks get-credentials --resource-group lab-eastus-rg --name lab-eastus-aks1
+
+# verify connected
+kubectl get nodes
+
+# deploy the ingress-nginx controller
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.0/deploy/static/provider/cloud/deploy.yaml
+
+# get get the public IP's for the ingress controller (after you record it, you can ctrl C out of it)
+kubectl get services --namespace ingress-nginx -o wide -w ingress-nginx-controller
+
+# create the containers for the east cluster
+kubectl apply -f east-site1.yaml --namespace ingress-nginx
+kubectl apply -f east-site2.yaml --namespace ingress-nginx
+kubectl apply -f east-site3.yaml --namespace ingress-nginx
+
+# add ingress controller for the east cluster (make sure you modify these to add the host name you will be sending to the cluster)
+kubectl apply -f east-ingress.yaml --namespace ingress-nginx
+
+#####
+##### complete east - you should be able to connect to the public IP of the cluster and pass the host name to see if it's working (use postman/curl, DNS or a hostfile on your machine to test)
+#####
+
+# Connect to the west cluster
+az aks get-credentials --resource-group lab-westus-rg --name lab-westus-aks1
+
+# verify connected
+kubectl get nodes
+
+# deploy the ingress-nginx controller
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.0/deploy/static/provider/cloud/deploy.yaml
+
+# get get the public IP's for the ingress controller (after you record it, you can ctrl C out of it)
+kubectl get services --namespace ingress-nginx -o wide -w ingress-nginx-controller
+
+# create the containers for the west cluster
+kubectl apply -f west-site1.yaml --namespace ingress-nginx
+kubectl apply -f west-site2.yaml --namespace ingress-nginx
+kubectl apply -f west-site3.yaml --namespace ingress-nginx
+
+# add ingress controller for the west cluster
+kubectl apply -f west-ingress.yaml --namespace ingress-nginx
+
+#####
+##### complete west - you should be able to connect to the public IP of the cluster and pass the host name to see if it's working (use postman/curl, DNS or a hostfile on your machine to test)
+#####

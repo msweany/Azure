@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer5-service   
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: customer5-service 
+  template:
+    metadata:
+      labels:
+        app: customer5-service 
+    spec:
+      containers:
+      - name: customer5-service 
+        image: mcr.microsoft.com/azuredocs/aks-helloworld:v1
+        ports:
+        - containerPort: 80
+        env:
+        - name: TITLE
+          value: "Welcome to Customer 5 West"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer5-service   
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+  selector:
+    app: customer5-service 

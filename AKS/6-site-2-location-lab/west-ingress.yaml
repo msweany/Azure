@@ -1,0 +1,37 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hello-world-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: customer4.mike-demo.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: customer4-service
+            port:
+              number: 80
+  - host: customer5.mike-demo.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: customer5-service
+            port:
+              number: 80
+  - host: customer6.mike-demo.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: customer6-service
+            port:
+              number: 80
