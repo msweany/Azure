@@ -1,6 +1,6 @@
 This has instructions on how to build a lab with 2 AKS clusters, using an NGINX ingress controller.
 
-All commands I used to create the lab are in the build-commands.txt file
+All commands I used to create the lab are in the build-commands.txt file. \n
 east-ingress.yaml contains the config for name based host routing in one cluster and displays 3 different services (mapped to customer1-service, customer2-service, customer3-service)
 
 west-ingress.yaml contains the config for name based host routing in the other cluster and displays 3 different services (mapped to customer4-service, customer5-service, customer6-service)
